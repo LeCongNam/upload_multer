@@ -65,6 +65,7 @@ class FileUploadService {
     getTypeFile = (file) => {
         let type = null
         const fileMimetype = file.mimetype.substr(0, file.mimetype.lastIndexOf('/'))
+        // Debug file Name
         // console.log("1: ", fileMimetype);
         // console.log("2: ", this.getExtensionname(file))
 
