@@ -1,44 +1,67 @@
 const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
-const multer = require('multer')
-const upload = multer({ dest: 'uploads/' })
-
+var multer = require('multer')
 
 const db = require('./database/connectDB')
-db.connect()
+const FileUploadService = require('./FileUploadService')
 
+db.connect()
 const app = express()
 
+
+app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.urlencoded({
     extended: true
 }))
 app.use(express.json())
 app.use(morgan('dev'))
-app.use(express.static(path.join(__dirname, 'src', 'public')))
-app.use(upload.single('avatar'));
 
-app.get('/upload', (req, res) => {
-    return res.json({
-        message: "ok"
+app.post('/upload/multiple', (req, res) => {
+    multer({ storage: FileUploadService }).array('vietfam', 12)(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            console.log("Multer Upload Faile: ",err);
+            // A Multer error occurred when uploading.
+            return res.json({
+                message: "Multer Upload Fail",
+                err
+            })
+        } else if (err) {
+            console.log("Unknown Upload Faile: ",err);
+            // An unknown error occurred when uploading.
+            return res.json({
+                message: "unknown Upload Fail",
+                err
+            })
+        }
+        // Successfully
+        return res.json({
+            message: "ok",
+        })
     })
 })
 
 app.post('/upload/one', (req, res) => {
-    const file = req.file
-    const idxDotLast = file.originalname.lastIndexOf('.') // ex: file.Name.html => return index = 10 
-    const fileNameClient = file.originalname.substr(0, idxDotLast)
-    //1. progress replace special characters by underscore
-    const fileNamFilter = fileNameClient.replace(/[^\w\s]/gi, '_')
-    // 2. convert to lowerCase + add unix time
-    const fileNameFormat = fileNamFilter.toLowerCase() + "_" + Date.now()
-    // 3. get Extension name
-    const extName = file.originalname.substr(idxDotLast, 4)
-    const filenameResult = fileNameFormat + extName
-
-    return res.json({
-        message: "ok",
-        filenameResult
+    multer({ storage: FileUploadService, fileFilter: FileUploadService.fileFilter }).single('doctor')(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            console.log("Multer Upload Faile: ",err);
+            // A Multer error occurred when uploading.
+            return res.json({
+                message: "Multer Upload Fail",
+                err
+            })
+        } else if (err) {
+            console.log("Unknown Upload Faile: ",err);
+            // An unknown error occurred when uploading.
+            return res.json({
+                message: "unknown Upload Fail",
+                err
+            })
+        }
+        // Successfully
+        return res.json({
+            message: "ok",
+        })
     })
 })
 
