@@ -3,8 +3,12 @@ const path = require('path')
 const morgan = require('morgan')
 var multer = require('multer')
 
+
+const ScaleImage = require('./lib/resizeImage');
+const scaleImage = new ScaleImage()
+
 const db = require('./database/connectDB')
-const FileUploadService = require('./FileUploadService')
+const FileUploadService = require('./lib/FileUploadService')
 
 db.connect()
 const app = express()
@@ -20,14 +24,14 @@ app.use(morgan('dev'))
 app.post('/upload/multiple', (req, res) => {
     multer({ storage: FileUploadService }).array('vietfam', 12)(req, res, function (err) {
         if (err instanceof multer.MulterError) {
-            console.log("Multer Upload Faile: ",err);
+            console.log("Multer Upload Faile: ", err);
             // A Multer error occurred when uploading.
             return res.json({
                 message: "Multer Upload Fail",
                 err
             })
         } else if (err) {
-            console.log("Unknown Upload Faile: ",err);
+            console.log("Unknown Upload Faile: ", err);
             // An unknown error occurred when uploading.
             return res.json({
                 message: "unknown Upload Fail",
@@ -41,29 +45,43 @@ app.post('/upload/multiple', (req, res) => {
     })
 })
 
-app.post('/upload/one', (req, res) => {
-    multer({ storage: FileUploadService, fileFilter: FileUploadService.fileFilter }).single('doctor')(req, res, function (err) {
-        if (err instanceof multer.MulterError) {
-            console.log("Multer Upload Faile: ",err);
-            // A Multer error occurred when uploading.
+app.post('/upload/one/scale-down',
+    multer({ storage: FileUploadService, fileFilter: FileUploadService.fileFilter }).single('photos'),
+    async (req, res) => {
+        try {
+            const pathInp = path.join(__dirname,'public','resize')
+           const scale =  await scaleImage.resizeScaleDown(req.file, { width: 300, height: 300, pathInput: pathInp })
+           console.log(scale);
+            // Successfully
             return res.json({
-                message: "Multer Upload Fail",
-                err
+                message: "ok",
             })
-        } else if (err) {
-            console.log("Unknown Upload Faile: ",err);
-            // An unknown error occurred when uploading.
+        } catch (error) {
+            console.log(error);
             return res.json({
-                message: "unknown Upload Fail",
-                err
+                message: error || 'Resize Failed',
             })
         }
-        // Successfully
-        return res.json({
-            message: "ok",
-        })
     })
-})
+
+
+    app.post('/upload/one/scale-down',
+    multer({ storage: FileUploadService, fileFilter: FileUploadService.fileFilter }).single('photos'),
+    async (req, res) => {
+        try {
+            const pathInp = path.join(__dirname,'public','resize')
+            await scaleImage.resizeScaleDown(req, { width: 300, height: 300, pathInput: pathInp, to: 5000 })
+            // Successfully
+            return res.json({
+                message: "ok",
+            })
+        } catch (error) {
+            console.log(error);
+            return res.json({
+                message: error || 'Resize Failed',
+            })
+        }
+    })
 
 app.get('/', (req, res) => {
     return res.json({

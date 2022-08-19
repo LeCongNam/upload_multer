@@ -2,6 +2,7 @@ const multer = require('multer')
 const { diskStorage, StorageEngine } = multer
 const path = require('path');
 
+
 class FileUploadService {
     storage = StorageEngine
     multer
@@ -20,19 +21,20 @@ class FileUploadService {
     constructor() {
         this.storage = diskStorage({
             destination: this.destination, // Thư mục đích
-            filename: this.convertFileName // Tên mong muốn
+            filename: this.convertFileName,// Tên mong muốn
+            fileFilter: this.fileFilter
         })
     }
 
     destination = (req, file, callback) => {
         const type = this.getTypeFile(file)
-        const  projectFolder = file.fieldname
+        // const  projectFolder = file.fieldname
         let folder = this.chooseFolder(type)
-        callback(null, path.join(__dirname, 'public',projectFolder, folder))
+        callback(null, path.join(__dirname,'../', 'public', folder))
     }
 
     convertFileName = (req, file, callback) => {
-        console.log("fileInfo: ", file);
+        // console.log("fileInfo: ", file);
         const idxDotLast = file.originalname.lastIndexOf('.') // ex: file.Name.html => return index = 10 
         const fileNameClient = file.originalname.substr(0, idxDotLast)
         //1. progress replace special characters by underscore
