@@ -65,12 +65,12 @@ app.post('/upload/one/scale-down',
     })
 
 
-    app.post('/upload/one/scale-down',
+    app.post('/upload/one/scale-up',
     multer({ storage: FileUploadService, fileFilter: FileUploadService.fileFilter }).single('photos'),
     async (req, res) => {
         try {
             const pathInp = path.join(__dirname,'public','resize')
-            await scaleImage.resizeScaleDown(req, { width: 300, height: 300, pathInput: pathInp, to: 5000 })
+            await scaleImage.resizeScaleUp(req.file, { width: 1000, height: 1000, pathInput: pathInp })
             // Successfully
             return res.json({
                 message: "ok",

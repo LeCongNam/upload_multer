@@ -11,16 +11,17 @@ class ScaleImage {
             if (!width || !height || !pathInput || !file) {
                 reject('Missing params input')
             }
+
             sharp(file.path)
             .resize(width, height)
             .jpeg({ quality: 90 })
             .toFile(path.join(pathInput,'/down/', `${width}x${height}-${file.filename}`), (err) => {
                 if (err) {
-                    reject(`${err}`)
+                   return reject(`${err}`)
                 }
                 const pathResult = path.join(pathInput, 'down' ,`${width}x${height}-${file.filename}`)
                 const fileName =`${width}x${height}-${file.filename}`
-                    resolve({
+                return   resolve({
                         fileName: fileName,
                         pathResult
                     })
@@ -32,16 +33,15 @@ class ScaleImage {
     resizeScaleUp(file, {
         width,
         height,
-        to,
         pathInput
     }) {
         return new Promise((resolve, reject) => {
-            if (!width || !height || !to || !pathInput || !file) {
+            if (!width || !height  || !pathInput || !file) {
                 reject('Missing params input')
             }
-            sharp(file.file.path)
+            sharp(file.path)
                 .resize(width, height)
-                .jpeg({ quality: to })
+                .jpeg({ })
                 .toFile(path.join(pathInput,'/up/',`${width}x${height}-${file.filename}`), (err) => {
                     if (err) {
                         reject(`${err}`)
