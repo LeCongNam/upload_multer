@@ -1,36 +1,47 @@
 const multer = require('multer')
 const { diskStorage, StorageEngine } = multer
 const path = require('path');
+const fs = require('fs')
+const Help = require('./help/helper');
+const ScaleImage = require('./ScaleImage');
 
 
 class FileUploadService {
-    storage = StorageEngine
+    storage
     multer
-    MIME_TYPE_IMAGE = {
-        'image/png': 'image/png',
-        'image/jpeg': 'image/jpeg',
-        'image/jpg': 'image/jpg'
-    }
-
-    MIME_TYPE_IMAGE = {
-        'image/png': 'image/png',
-        'image/jpeg': 'image/jpeg',
-        'image/jpg': 'image/jpg'
-    }
+    help
+    scaleImage
 
     constructor() {
         this.storage = diskStorage({
             destination: this.destination, // Thư mục đích
             filename: this.convertFileName,// Tên mong muốn
-            fileFilter: this.fileFilter
+            fileFilter: this.fileFilter // Kích hoạt filter mong muốn
         })
+        this.help = new Help()
+        this.scaleImage = new ScaleImage()
     }
 
-    destination = (req, file, callback) => {
-        const type = this.getTypeFile(file)
-        // const  projectFolder = file.fieldname
-        let folder = this.chooseFolder(type)
-        callback(null, path.join(__dirname,'../', 'public', folder))
+    destination = async (req, file, callback) => {
+        try {
+            //****************** Test Scale auto
+                // const pathInp = path.join(__dirname, 'public', 'author')
+                // const scale = await this.scaleImage.resizeScaleDown(file, { width: 300, height: 300, pathInput: pathInp })
+                // console.log(scale);
+            // ****************** Test Scale Auto
+            const type = this.help.getTypeFile(file)
+            let folder = this.help.chooseFolder(`${type}`)
+            const pathUpload = path.join(__dirname, '../', 'public', 'author', folder)
+            const folderExits = await this.help.findFolderExits(pathUpload)
+            if (!folderExits) {
+                fs.mkdirSync(pathUpload)
+            }
+            callback(null, pathUpload)
+        } catch (error) {
+            console.log("tesst", error)
+            callback(null, false)
+        }
+
     }
 
     convertFileName = (req, file, callback) => {
@@ -42,84 +53,20 @@ class FileUploadService {
         // 2. convert to lowerCase + add unix time
         const fileNameFormat = fileNamFilter.toLowerCase() + "_" + Date.now()
         // 3. get Extension name
-        const filenameResult = fileNameFormat + "." + this.getExtensionname(file)
+        const filenameResult = fileNameFormat + "." + this.help.getExtensionname(file)
         callback(null, filenameResult)
     }
-
-    getExtensionname = (file) => {
-        const idxDotLast = file.originalname.lastIndexOf('.')
-        const extName = file.originalname.substr(idxDotLast + 1, 4)
-        return extName
-    }
-
 
     // Filter: fileSize, filename,... 
     // Bộ lọc kích hoạt trong: multer({fileFilter: fileFilter })
     fileFilter = (req, file, callback) => {
-        if (this.MIME_TYPE_IMAGE[file.mimetype] === undefined) {
+        if (MIME_TYPE_IMAGE[file.mimetype] === undefined) {
             return callback(new Error('File Extension Invalid!!!'))
         }
 
         callback(null, false)
     }
 
-
-    getTypeFile = (file) => {
-        let type = null
-        const fileMimetype = file.mimetype.substr(0, file.mimetype.lastIndexOf('/'))
-        // console.log("1: ", fileMimetype);
-        // console.log("2: ", this.getExtensionname(file))
-
-        if ((this.MIME_TYPE_IMAGE[file.mimetype] !== undefined) ||
-            (fileMimetype == 'image')
-        ) {
-            type = 'image'
-        }
-
-        if ((this.getExtensionname(file) == 'docx') ||
-            (this.getExtensionname(file) == 'doc') &&
-            fileMimetype == 'application') {
-            type = "docx"
-        }
-
-        if ((this.getExtensionname(file) == 'xlsx') ||
-            (this.getExtensionname(file) == 'xls') &&
-            fileMimetype == 'application') {
-            type = "xlsx"
-        }
-
-        if ((this.getExtensionname(file) == 'mp4') &&
-            (fileMimetype == 'video')
-        ) {
-            type = "video"
-        }
-
-        return type
-
-    }
-
-    chooseFolder = (type)=>{
-        let  folder = null
-        switch (type) {
-            case 'image':
-                folder = type
-                break;
-            case 'xlsx':
-                folder = type
-                break;
-            case 'docx':
-                folder = type
-                break;
-            case 'video':
-                folder = type
-                break;
-            default:
-                folder = 'other'
-                break;
-        }
-
-        return folder
-    }
 }
 
 module.exports = new FileUploadService().storage

@@ -4,7 +4,7 @@ const morgan = require('morgan')
 var multer = require('multer')
 
 
-const ScaleImage = require('./lib/resizeImage');
+const ScaleImage = require('./lib/ScaleImage');
 const scaleImage = new ScaleImage()
 
 const db = require('./database/connectDB')
@@ -22,37 +22,39 @@ app.use(express.json())
 app.use(morgan('dev'))
 
 app.post('/upload/multiple', (req, res) => {
-    multer({ storage: FileUploadService }).array('vietfam', 12)(req, res, function (err) {
-        if (err instanceof multer.MulterError) {
-            console.log("Multer Upload Faile: ", err);
-            // A Multer error occurred when uploading.
+    multer({ storage: FileUploadService })
+        h
+        (req, res, function (err) {
+            if (err instanceof multer.MulterError) {
+                console.log("Multer Upload Faile: ", err);
+                // A Multer error occurred when uploading.
+                return res.json({
+                    message: "Multer Upload Fail",
+                    err
+                })
+            } else if (err) {
+                console.log("Unknown Upload Faile: ", err);
+                // An unknown error occurred when uploading.
+                return res.json({
+                    message: "unknown Upload Fail",
+                    err
+                })
+            }
+            // Successfully
             return res.json({
-                message: "Multer Upload Fail",
-                err
+                message: "ok",
             })
-        } else if (err) {
-            console.log("Unknown Upload Faile: ", err);
-            // An unknown error occurred when uploading.
-            return res.json({
-                message: "unknown Upload Fail",
-                err
-            })
-        }
-        // Successfully
-        return res.json({
-            message: "ok",
         })
-    })
 })
 
 app.post('/upload/one/scale-down',
     multer({ storage: FileUploadService, fileFilter: FileUploadService.fileFilter }).single('photos'),
     async (req, res) => {
         try {
-            const pathInp = path.join(__dirname,'public','resize')
-           const scale =  await scaleImage.resizeScaleDown(req.file, { width: 300, height: 300, pathInput: pathInp })
-           console.log(scale);
-            // Successfully
+            const pathInp = path.join(__dirname, 'public', 'author')
+            const scale = await scaleImage.resizeScaleDown(req.file, { width: 300, height: 300, pathInput: pathInp })
+            // console.log(scale);
+            
             return res.json({
                 message: "ok",
             })
@@ -65,23 +67,25 @@ app.post('/upload/one/scale-down',
     })
 
 
-    app.post('/upload/one/scale-up',
-    multer({ storage: FileUploadService, fileFilter: FileUploadService.fileFilter }).single('photos'),
-    async (req, res) => {
-        try {
-            const pathInp = path.join(__dirname,'public','resize')
-            await scaleImage.resizeScaleUp(req.file, { width: 1000, height: 1000, pathInput: pathInp })
-            // Successfully
-            return res.json({
-                message: "ok",
-            })
-        } catch (error) {
-            console.log(error);
-            return res.json({
-                message: error || 'Resize Failed',
-            })
-        }
-    })
+app.post('/upload/one/scale-up',
+multer({ storage: FileUploadService, fileFilter: FileUploadService.fileFilter }).single('photos'),
+async (req, res) => {
+    try {
+        const pathInp = path.join(__dirname, 'public', 'author')
+        const scale = await scaleImage.resizeScaleUp(req.file, { width: 300, height: 300, pathInput: pathInp })
+        console.log(scale);
+        // Successfully
+        return res.json({
+            message: "ok",
+        })
+    } catch (error) {
+        console.log(error);
+        return res.json({
+            message: error || 'Resize Failed',
+        })
+    }
+})
+
 
 app.get('/', (req, res) => {
     return res.json({
